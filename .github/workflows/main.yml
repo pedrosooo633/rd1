@@ -25,23 +25,17 @@ jobs:
       run: |
         if (Test-Path "C:\Program Files\WinRAR\WinRAR.exe") { Write-Output "WinRAR installed successfully." } else { Write-Output "WinRAR installation failed." }
 
-    - name: Create Download Directory in D:
+    - name: Create Download Directory
       run: New-Item -ItemType Directory -Path "D:\DownloadedFiles" -Force
 
-    - name: Download Additional Files from Google Drive
+    - name: Download Additional Files
       run: |
-        function Download-From-GDrive {
-            param (
-                [string]$FileId,
-                [string]$OutFile
-            )
-            $DownloadUrl = "https://drive.google.com/uc?export=download&id=$FileId"
-            Invoke-WebRequest -Uri $DownloadUrl -OutFile $OutFile -UseBasicParsing
-        }
+        $file1 = "D:\DownloadedFiles\file1.zip"
+        $file2 = "D:\DownloadedFiles\file2.zip"
+        $gdrive_base = "https://drive.google.com/uc?export=download&id="
 
-        # تحميل الملفات باستخدام ID الصحيح
-        Download-From-GDrive -FileId "1RZ1etCuigsKx3xpx15d32XkJA02YvRiw" -OutFile "D:\DownloadedFiles\file1.zip"
-        Download-From-GDrive -FileId "1viclVUYkeyFpx5cmGPkyaRbi5ExTP5gw" -OutFile "D:\DownloadedFiles\file2.zip"
+        Invoke-WebRequest -Uri "$gdrive_base" + "1RZ1etCuigsKx3xpx15d32XkJA02YvRiw" -OutFile $file1 -UseBasicParsing
+        Invoke-WebRequest -Uri "$gdrive_base" + "1viclVUYkeyFpx5cmGPkyaRbi5ExTP5gw" -OutFile $file2 -UseBasicParsing
 
     - name: Enable TS
       run: Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -Value 0
@@ -56,6 +50,4 @@ jobs:
         Start-Process -FilePath "$env:USERPROFILE\playit.exe" -ArgumentList "--secret $env:PLAYIT_AUTH_KEY" -NoNewWindow -Wait
         Start-Process -FilePath "$env:USERPROFILE\playit.exe" -NoNewWindow
 
-    - name: Keep the GitHub Action Runner Alive
-      run: |
-          Start-Sleep -Seconds 21600  # Adjust the duration based on your needs
+    - name: Keep the

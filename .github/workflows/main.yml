@@ -14,7 +14,7 @@ jobs:
     - name: Download and Install Playit
       run: |
         Invoke-WebRequest -Uri "https://github.com/playit-cloud/playit-agent/releases/download/v0.15.26/playit-windows-x86_64-signed.exe" -OutFile "$env:USERPROFILE\playit.exe"
-        Start-Sleep -Seconds 5  # Give some time for the download to complete
+        Start-Sleep -Seconds 5  # Wait for download to complete
 
     - name: Install WinRAR
       run: |
@@ -33,27 +33,27 @@ jobs:
         pip install gdown
 
     - name: Create Download Directory in D:
-      run: New-Item -ItemType Directory -Path "D:\DownloadedFiles" -Force
+      run: |
+        New-Item -ItemType Directory -Path "D:\DownloadedFiles" -Force
 
     - name: Download Additional Files from Google Drive
       run: |
         gdown --id 1RZ1etCuigsKx3xpx15d32XkJA02YvRiw -O "D:\DownloadedFiles\file1.zip"
         gdown --id 1viclVUYkeyFpx5cmGPkyaRbi5ExTP5gw -O "D:\DownloadedFiles\file2.zip"
 
-    - name: Enable TS
-      run: Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -Value 0
-    - run: Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-    - run: Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name "UserAuthentication" -Value 1
-    - run: Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "admin@123" -Force)
+    - name: Enable Remote Desktop
+      run: |
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
+        Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "admin@123" -Force)
 
-    - name: www.toolboxlap.com
+    - name: Start Playit Tunnel
       env:
-        PLAYIT_AUTH_KEY: ${{ secrets.PL }} 
+        PLAYIT_AUTH_KEY: ${{ secrets.PL }}
       run: |
         Start-Process -FilePath "$env:USERPROFILE\playit.exe" -ArgumentList "--secret $env:PLAYIT_AUTH_KEY" -NoNewWindow -Wait
         Start-Process -FilePath "$env:USERPROFILE\playit.exe" -NoNewWindow
 
-    - name: Keep the GitHub Action Runner Alive
-      run: |
-          Start-Sleep -Seconds 21600  # Adjust the duration based on your needs
-
+    - name: Keep GitHub Action Runner Alive
+      run: Start-Sleep -Seconds 21600  # Keep session active

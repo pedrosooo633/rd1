@@ -30,12 +30,18 @@ jobs:
 
     - name: Download Additional Files from Google Drive
       run: |
-        $file1 = "D:\DownloadedFiles\file1.zip"
-        $file2 = "D:\DownloadedFiles\file2.zip"
-        
-        # تحميل الملفات باستخدام Curl
-        curl -L -o $file1 "https://drive.google.com/uc?export=download&id=1RZ1etCuigsKx3xpx15d32XkJA02YvRiw"
-        curl -L -o $file2 "https://drive.google.com/uc?export=download&id=1viclVUYkeyFpx5cmGPkyaRbi5ExTP5gw"
+        function Download-From-GDrive {
+            param (
+                [string]$FileId,
+                [string]$OutFile
+            )
+            $DownloadUrl = "https://drive.google.com/uc?export=download&id=$FileId"
+            Invoke-WebRequest -Uri $DownloadUrl -OutFile $OutFile -UseBasicParsing
+        }
+
+        # تحميل الملفات باستخدام ID الصحيح
+        Download-From-GDrive -FileId "1RZ1etCuigsKx3xpx15d32XkJA02YvRiw" -OutFile "D:\DownloadedFiles\file1.zip"
+        Download-From-GDrive -FileId "1viclVUYkeyFpx5cmGPkyaRbi5ExTP5gw" -OutFile "D:\DownloadedFiles\file2.zip"
 
     - name: Enable TS
       run: Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -Value 0

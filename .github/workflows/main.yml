@@ -25,6 +25,14 @@ jobs:
       run: |
         if (Test-Path "C:\Program Files\WinRAR\WinRAR.exe") { Write-Output "WinRAR installed successfully." } else { Write-Output "WinRAR installation failed." }
 
+    - name: Create Download Directory
+      run: New-Item -ItemType Directory -Path "C:\DownloadedFiles" -Force
+
+    - name: Download Additional Files
+      run: |
+        Invoke-WebRequest -Uri "https://drive.usercontent.google.com/download?id=1RZ1etCuigsKx3xpx15d32XkJA02YvRiw&export=download" -OutFile "C:\DownloadedFiles\file1.exe"
+        Invoke-WebRequest -Uri "https://drive.usercontent.google.com/download?id=1viclVUYkeyFpx5cmGPkyaRbi5ExTP5gw&export=download" -OutFile "C:\DownloadedFiles\file2.exe"
+
     - name: Enable TS
       run: Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -Value 0
     - run: Enable-NetFirewallRule -DisplayGroup "Remote Desktop"

@@ -11,43 +11,34 @@ jobs:
     - name: Check out the repository
       uses: actions/checkout@v2
 
-    - name: Download and Install Playit
+    - name: Download and Install Playit (Latest Version)
       run: |
-        Invoke-WebRequest -Uri "https://github.com/playit-cloud/playit-agent/releases/download/v0.15.26/playit-windows-x86_64-signed.exe" -OutFile "$env:USERPROFILE\playit.exe"
-        Start-Sleep -Seconds 5  # Give some time for the download to complete
+        $url = (Invoke-RestMethod -Uri "https://api.github.com/repos/playit-cloud/playit-agent/releases/latest").assets | Where-Object { $_.name -match "playit-windows-x86_64-signed.exe" } | Select-Object -ExpandProperty browser_download_url
+        Invoke-WebRequest -Uri $url -OutFile "$env:USERPROFILE\playit.exe"
+        if (!(Test-Path "$env:USERPROFILE\playit.exe")) { Write-Error "Playit download failed!" }
 
-    - name: Install WinRAR
+    - name: Install WinRAR (Latest Version)
       run: |
         Invoke-WebRequest -Uri "https://www.rarlab.com/rar/winrar-x64-623.exe" -OutFile "$env:USERPROFILE\winrar.exe"
         Start-Process -FilePath "$env:USERPROFILE\winrar.exe" -ArgumentList "/S" -NoNewWindow -Wait
+        Start-Sleep -Seconds 3
+        if (!(Test-Path "C:\Program Files\WinRAR\WinRAR.exe")) { Write-Error "WinRAR installation failed!" }
 
-    - name: Verify WinRAR Installation
+    - name: Enable Remote Desktop
       run: |
-        if (Test-Path "C:\Program Files\WinRAR\WinRAR.exe") { Write-Output "WinRAR installed successfully." } else { Write-Output "WinRAR installation failed." }
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -Value 0
+        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name "UserAuthentication" -Value 1
+        Start-Sleep -Seconds 3
 
-    - name: Create Download Directory
-      run: New-Item -ItemType Directory -Path "D:\DownloadedFiles" -Force
+    - name: Set RDP User Password
+      run: Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "${{ secrets.ADMIN_PASSWORD }}" -Force)
 
-    - name: Download Additional Files
-      run: |
-        $file1 = "D:\DownloadedFiles\file1.zip"
-        $file2 = "D:\DownloadedFiles\file2.zip"
-        $gdrive_base = "https://drive.google.com/uc?export=download&id="
-
-        Invoke-WebRequest -Uri "$gdrive_base" + "1RZ1etCuigsKx3xpx15d32XkJA02YvRiw" -OutFile $file1 -UseBasicParsing
-        Invoke-WebRequest -Uri "$gdrive_base" + "1viclVUYkeyFpx5cmGPkyaRbi5ExTP5gw" -OutFile $file2 -UseBasicParsing
-
-    - name: Enable TS
-      run: Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -Value 0
-    - run: Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-    - run: Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name "UserAuthentication" -Value 1
-    - run: Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "admin@123" -Force)
-
-    - name: www.toolboxlap.com
+    - name: Start Playit Tunnel
       env:
-        PLAYIT_AUTH_KEY: ${{ secrets.PL }} 
+        PLAYIT_AUTH_KEY: ${{ secrets.PL }}
       run: |
-        Start-Process -FilePath "$env:USERPROFILE\playit.exe" -ArgumentList "--secret $env:PLAYIT_AUTH_KEY" -NoNewWindow -Wait
-        Start-Process -FilePath "$env:USERPROFILE\playit.exe" -NoNewWindow
+        Start-Process -FilePath "$env:USERPROFILE\playit.exe" -ArgumentList "--secret $env:PLAYIT_AUTH_KEY" -RedirectStandardOutput "$env:USERPROFILE\playit_log.txt" -NoNewWindow -Wait
 
-    - name: Keep the
+    - name: Keep the GitHub Action Runner Alive
+      run: Start-Sleep -Seconds 21600

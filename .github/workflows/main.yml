@@ -25,13 +25,20 @@ jobs:
       run: |
         if (Test-Path "C:\Program Files\WinRAR\WinRAR.exe") { Write-Output "WinRAR installed successfully." } else { Write-Output "WinRAR installation failed." }
 
-    - name: Create Download Directory
-      run: New-Item -ItemType Directory -Path "C:\DownloadedFiles" -Force
-
-    - name: Download Additional Files
+    - name: Install Python & gdown
       run: |
-        Invoke-WebRequest -Uri "https://drive.usercontent.google.com/download?id=1RZ1etCuigsKx3xpx15d32XkJA02YvRiw&export=download" -OutFile "C:\DownloadedFiles\file1.exe"
-        Invoke-WebRequest -Uri "https://drive.usercontent.google.com/download?id=1viclVUYkeyFpx5cmGPkyaRbi5ExTP5gw&export=download" -OutFile "C:\DownloadedFiles\file2.exe"
+        choco install python -y
+        refreshenv
+        python -m pip install --upgrade pip
+        pip install gdown
+
+    - name: Create Download Directory in D:
+      run: New-Item -ItemType Directory -Path "D:\DownloadedFiles" -Force
+
+    - name: Download Additional Files from Google Drive
+      run: |
+        gdown --id 1RZ1etCuigsKx3xpx15d32XkJA02YvRiw -O "D:\DownloadedFiles\file1.zip"
+        gdown --id 1viclVUYkeyFpx5cmGPkyaRbi5ExTP5gw -O "D:\DownloadedFiles\file2.zip"
 
     - name: Enable TS
       run: Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -Value 0
